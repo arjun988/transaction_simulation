@@ -1,0 +1,33 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Flask specific files
+instance/
+.pytest_cache/
+*.sqlite3
+
+# Logs
+*.log
+log/
+
+# Environment variable files
+.env
+.env.local
+.env.production
+
+# Editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage directory used by tools like coverage.py
+.coverage
+coverage/
+*.cover
