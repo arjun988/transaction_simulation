@@ -4,25 +4,31 @@ import Navbar from './components/Navbar';
 import AccountForm from './components/AccountForm';
 import TransferForm from './components/TransferForm';
 import AccountList from './components/AccountList';
-import { BarChart3, Wallet, ArrowLeftRight } from 'lucide-react';
+import AdminAuditPanel from './components/AdminAuditPanel';
+import { BarChart3, Wallet, ArrowLeftRight, AlertTriangle } from 'lucide-react';
 
 const Dashboard = () => {
   const [totalBalance, setTotalBalance] = useState(0);
   const [activeAccounts, setActiveAccounts] = useState(0);
+  const [pendingTransfers, setPendingTransfers] = useState(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/account_details');
-        if (response.ok) {
-          const accounts = await response.json();
-          // Calculate total balance
+        // Fetch account details
+        const accountsResponse = await fetch('http://localhost:5000/account_details');
+        if (accountsResponse.ok) {
+          const accounts = await accountsResponse.json();
           const total = accounts.reduce((sum, account) => sum + account.balance, 0);
           setTotalBalance(total);
-          // Set number of active accounts
           setActiveAccounts(accounts.length);
-        } else {
-          throw new Error('Failed to fetch dashboard data');
+        }
+
+        // Fetch pending transfers count
+        const pendingResponse = await fetch('http://localhost:5000/admin/pending_transfers');
+        if (pendingResponse.ok) {
+          const pendingData = await pendingResponse.json();
+          setPendingTransfers(pendingData.length);
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -36,7 +42,7 @@ const Dashboard = () => {
     <>
       <div className="dashboard-grid">
         <div className="stat-card">
-          <BarChart3 size={24} color="var(--primary-color)" />
+          <BarChart3 size={24} className="text-blue-500" />
           <h3>Total Balance</h3>
           <div className="stat-value">${totalBalance.toLocaleString('en-US', {
             minimumFractionDigits: 2,
@@ -45,22 +51,28 @@ const Dashboard = () => {
           <p>Across all accounts</p>
         </div>
         <div className="stat-card">
-          <Wallet size={24} color="var(--secondary-color)" />
+          <Wallet size={24} className="text-green-500" />
           <h3>Active Accounts</h3>
           <div className="stat-value">{activeAccounts}</div>
           <p>Currently managed</p>
         </div>
         <div className="stat-card">
-          <ArrowLeftRight size={24} color="var(--success-color)" />
-          <h3>Recent Transfers</h3>
-          <div className="stat-value">28</div>
-          <p>Last 30 days</p>
+          <AlertTriangle size={24} className="text-yellow-500" />
+          <h3>Pending Reviews</h3>
+          <div className="stat-value">{pendingTransfers}</div>
+          <p>Transfers awaiting approval</p>
         </div>
       </div>
-      <AccountList />
+      <div className="mt-6">
+        <AdminAuditPanel />
+      </div>
+      <div className="mt-6">
+        <AccountList />
+      </div>
     </>
   );
 };
+
 // Accounts page component
 const AccountsPage = () => {
   return (
@@ -73,7 +85,14 @@ const AccountsPage = () => {
 
 // Transfer page component
 const TransferPage = () => {
-  return <TransferForm />;
+  return (
+    <>
+      <TransferForm />
+      <div className="mt-6">
+        <AdminAuditPanel />
+      </div>
+    </>
+  );
 };
 
 // History page component
@@ -94,18 +113,15 @@ const SettingsPage = () => {
   const [permissions, setPermissions] = useState(false);
 
   const handleLogout = () => {
-    // Logic to handle admin logout (e.g., clear session, redirect)
     console.log('Admin logged out');
   };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
-    // You might want to save the preference in local storage or context
   };
 
   const togglePermissions = () => {
     setPermissions(!permissions);
-    // Logic to handle permission changes
   };
 
   return (
@@ -133,13 +149,15 @@ const SettingsPage = () => {
           Permission Only
         </label>
       </div>
-      <button className="button" onClick={handleLogout}>
+      <button 
+        className="button"
+        onClick={handleLogout}
+      >
         Logout
       </button>
     </div>
   );
 };
-
 
 const App = () => {
   return (
