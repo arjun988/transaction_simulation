@@ -5,6 +5,10 @@ class AuditService:
     def __init__(self):
         self.audit_collection = db['transaction_audits']
         self.threshold_amount = 10000  # Configure threshold for large transactions
+        self.suspicious_keywords = [
+            'urgent', 'emergency', 'confidential', 'private',
+            'quick', 'secret', 'undisclosed'
+        ]
         
     def create_audit(self, transaction_id, sender_id, recipient_id, amount, justification):
         audit = {
@@ -46,5 +50,17 @@ class AuditService:
                 'type': 'suspicious_justification',
                 'message': 'Missing or insufficient transaction justification'
             })
+        
+        # Check for suspicious keywords in justification
+        if justification:
+            found_keywords = [
+                keyword for keyword in self.suspicious_keywords 
+                if keyword.lower() in justification.lower()
+            ]
+            if found_keywords:
+                flags.append({
+                    'type': 'suspicious_keywords',
+                    'message': f'Suspicious keywords detected: {", ".join(found_keywords)}'
+                })
             
         return flags
